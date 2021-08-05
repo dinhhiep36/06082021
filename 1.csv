@@ -1,0 +1,35 @@
+// tìm toàn bộ email Editor, nhưng loại bỏ email Owner
+function getEditors() {
+  const thisSheet = SpreadsheetApp.getActiveSpreadsheet()
+  const owner = thisSheet.getOwner()
+  const editors = thisSheet.getEditors()
+  return editors.filter(user => user.getEmail() !== owner.getEmail())
+}
+
+function addProtection(sheet, rangeA1) {
+  const editors = getEditors()
+  let protection = sheet.getRange(rangeA1).protect()
+  protection.removeEditors(editors)
+}
+
+function removeProtection(sheet, rangeA1) {
+  var allProtections = sheet.getProtections(SpreadsheetApp.ProtectionType.RANGE);
+  var matchingProtections = allProtections.filter(function(existingProtection) {
+   return existingProtection.getRange().getA1Notation() == rangeA1;
+  });
+  matchingProtections.forEach(protection => protection.remove())
+};
+
+function onEdit(e) {
+ if(e.range.getColumn() !== 6) return;
+ const cellValue = e.range.getValue()
+ const sheet = e.range.getSheet()
+ const row = e.range.getRow()
+ const rangeToLock = `${row}:${row}`
+
+ if(cellValue === "lock") {
+   addProtection(sheet, rangeToLock)
+ } else if(cellValue === "unlock") {
+   removeProtection(sheet, rangeToLock)
+ }
+}
